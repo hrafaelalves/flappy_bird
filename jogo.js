@@ -39,6 +39,100 @@ const background = {
   }
 }
 
+function createPipes(){
+  const pipes = {
+    width: 52,
+    height: 400,
+    floor: {
+      sourceX: 0,
+      sourceY: 169
+    },
+    sky: {
+      sourceX: 52,
+      sourceY: 169
+    },
+    spaceBetween: 80,
+    draw(){
+      pipes.pairsOfPipes.forEach(function(pair){
+        const yRandom = pair.y;
+        const spacingBetweenThePipes = 90;
+
+        const skyPipeX = pair.x;
+        const skyPipeY = yRandom;
+        context.drawImage(
+          sprites,
+          pipes.sky.sourceX, pipes.sky.sourceY,
+          pipes.width, pipes.height,
+          skyPipeX, skyPipeY,
+          pipes.width, pipes.height
+        );
+
+        const floorPipeX = pair.x;
+        const floorPipeY = pipes.height + spacingBetweenThePipes + yRandom;
+        context.drawImage(
+          sprites,
+          pipes.floor.sourceX, pipes.floor.sourceY,
+          pipes.width, pipes.height,
+          floorPipeX, floorPipeY,
+          pipes.width, pipes.height
+        );
+
+        pair.skyPipe = {
+          x: skyPipeX,
+          y: pipes.height + skyPipeY
+        }
+
+        pair.floorPipe = {
+          x: floorPipeX,
+          y: floorPipeY
+        }
+      });
+    },
+    hasBeenCollisionWithFlappyBird(pair){
+      const flappyBirdHead = globals.flappyBird.positionY;
+      const flappyBirdFeet = globals.flappyBird.positionY + globals.flappyBird.height;
+
+      if(globals.flappyBird.positionX >= pair.x){
+        if(flappyBirdHead <= pair.skyPipe.y){
+          return true;
+        }
+        
+        if(flappyBirdFeet >= pair.floorPipe.y){
+          return true;
+        }
+      }
+
+      return false;
+    },
+    pairsOfPipes: [],
+    update(){
+      const passed100Frames = frames % 100 === 0;
+
+      if(passed100Frames){
+        pipes.pairsOfPipes.push({
+          x: canvas.width,
+          y: -150 * (Math.random() + 1),
+        })
+      }
+
+      pipes.pairsOfPipes.forEach(function(pair) {
+        pair.x = pair.x - 2;
+
+        if(pipes.hasBeenCollisionWithFlappyBird(pair)){
+          hitSound.play();
+          changeScreen(screens.BEGIN);
+        }
+
+        if(pair.x + pipes.width <= 0){
+          pipes.pairsOfPipes.shift();
+        }
+      });
+    }
+  };
+
+  return pipes;
+}
+
 function createFloor(){
   const floor = {
     sourceX: 0,
@@ -182,12 +276,13 @@ const screens = {
     init(){
       globals.flappyBird = createFlappyBird();
       globals.floor = createFloor();
+      globals.pipes = createPipes();
     },
     draw(){
       background.draw();
+      globals.flappyBird.draw();
       globals.floor.draw();
       messageGetReady.draw();
-      globals.flappyBird.draw();
     },
     click(){
       changeScreen(screens.GAME);
@@ -199,6 +294,7 @@ const screens = {
   GAME: {
     draw(){
       background.draw();
+      globals.pipes.draw();
       globals.floor.draw();
       globals.flappyBird.draw();
     },
@@ -206,6 +302,7 @@ const screens = {
       globals.flappyBird.jump();
     },
     update(){
+      globals.pipes.update();
       globals.flappyBird.update();
       globals.floor.update();
     }
