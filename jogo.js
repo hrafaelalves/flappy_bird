@@ -68,6 +68,8 @@ const flappyBird = {
   height: 24,
   positionX: 10,
   positionY: 50,
+  velocity: 0,
+  gravity: 0.25,
   draw(){
     context.drawImage(
       sprites, // image
@@ -76,18 +78,77 @@ const flappyBird = {
       flappyBird.positionX, flappyBird.positionY, // position x and y to draw on canvas
       flappyBird.width, flappyBird.height, // width, height (cut size on the canvas)
     );
+  },
+  update(){
+    flappyBird.velocity = flappyBird.velocity + flappyBird.gravity;
+    flappyBird.positionY = flappyBird.positionY + flappyBird.velocity;
   }
 }
   
+const messageGetReady = {
+  sourceX: 134,
+  sourceY: 0,
+  width: 174,
+  height: 152,
+  positionX: (canvas.width / 2) - (174 / 2),
+  positionY: 50,
+  draw(){
+    context.drawImage(
+      sprites, // image
+      messageGetReady.sourceX, messageGetReady.sourceY, // source x, source y
+      messageGetReady.width, messageGetReady.height, // width, height (cut size on the sprite)
+      messageGetReady.positionX, messageGetReady.positionY, // position x and y to draw on canvas
+      messageGetReady.width, messageGetReady.height, // width, height (cut size on the canvas)
+    );
+  }
+}
+
+let activedScreen = {};
+
+function changeScreen(newScreen){
+  activedScreen = newScreen;
+}
+
+const screens = {
+  BEGIN: {
+    draw(){
+      background.draw();
+      floor.draw();
+      messageGetReady.draw();
+      flappyBird.draw();
+    },
+    click(){
+      changeScreen(screens.GAME);
+    },
+    update(){
+
+    }
+  },
+  GAME: {
+    draw(){
+      background.draw();
+      floor.draw();
+      flappyBird.draw();
+    },
+    update(){
+      flappyBird.update();
+    }
+  }
+}
+
 // loop that creates game frames per second;
 function loop(){
-  background.draw();
-  floor.draw();
-  flappyBird.draw();
-
-  // flappyBird.positionY = flappyBird.positionY + 1;
+  activedScreen.draw();
+  activedScreen.update();
 
   requestAnimationFrame(loop);
 }
 
+window.addEventListener('click', function(){
+  if(activedScreen.click){
+    activedScreen.click();
+  }
+});
+
+changeScreen(screens.BEGIN);
 loop();
