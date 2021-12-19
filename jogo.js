@@ -92,7 +92,7 @@ function createPipes(){
       const flappyBirdHead = globals.flappyBird.positionY;
       const flappyBirdFeet = globals.flappyBird.positionY + globals.flappyBird.height;
 
-      if(globals.flappyBird.positionX >= pair.x){
+      if(globals.flappyBird.positionX + (globals.flappyBird.width - 5) >= pair.x){
         if(flappyBirdHead <= pair.skyPipe.y){
           return true;
         }
@@ -119,8 +119,8 @@ function createPipes(){
         pair.x = pair.x - 2;
 
         if(pipes.hasBeenCollisionWithFlappyBird(pair)){
-          hitSound.play();
-          changeScreen(screens.BEGIN);
+          // hitSound.play();
+          changeScreen(screens.GAME_OVER);
         }
 
         if(pair.x + pipes.width <= 0){
@@ -228,9 +228,9 @@ function createFlappyBird(){
     },
     update(){
       if(makeCollision(flappyBird, globals.floor)){
-        hitSound.play();
+        // hitSound.play();
 
-        changeScreen(screens.BEGIN);
+        changeScreen(screens.GAME_OVER);
         return;
       }
   
@@ -240,6 +240,28 @@ function createFlappyBird(){
   };
 
   return flappyBird;
+}
+
+function createScore(){
+  const score = {
+    scoring: 0,
+    draw(){
+      context.font = `40px 'VT323'`;
+      context.fillStyle = 'white';
+      context.textAlign = 'right';
+      context.fillText(`${score.scoring}`, canvas.width - 10, 35);
+    },
+    update(){
+      const framesInterval = 100;
+      const passedInterval = frames % framesInterval === 0;
+
+      if(passedInterval){
+        score.scoring = score.scoring + 1;
+      }
+    }
+  }
+
+  return score;
 }
   
 const messageGetReady = {
@@ -256,6 +278,24 @@ const messageGetReady = {
       messageGetReady.width, messageGetReady.height, // width, height (cut size on the sprite)
       messageGetReady.positionX, messageGetReady.positionY, // position x and y to draw on canvas
       messageGetReady.width, messageGetReady.height, // width, height (cut size on the canvas)
+    );
+  }
+}
+  
+const messageGameOver = {
+  sourceX: 134,
+  sourceY: 153,
+  width: 226,
+  height: 200,
+  positionX: (canvas.width / 2) - (226 / 2),
+  positionY: 50,
+  draw(){
+    context.drawImage(
+      sprites, // image
+      messageGameOver.sourceX, messageGameOver.sourceY, // source x, source y
+      messageGameOver.width, messageGameOver.height, // width, height (cut size on the sprite)
+      messageGameOver.positionX, messageGameOver.positionY, // position x and y to draw on canvas
+      messageGameOver.width, messageGameOver.height, // width, height (cut size on the canvas)
     );
   }
 }
@@ -292,11 +332,15 @@ const screens = {
     }
   },
   GAME: {
+    init(){
+      globals.score = createScore();
+    },
     draw(){
       background.draw();
       globals.pipes.draw();
       globals.floor.draw();
       globals.flappyBird.draw();
+      globals.score.draw();
     },
     click(){
       globals.flappyBird.jump();
@@ -305,6 +349,18 @@ const screens = {
       globals.pipes.update();
       globals.flappyBird.update();
       globals.floor.update();
+      globals.score.update();
+    }
+  },
+  GAME_OVER: {
+    draw(){
+      messageGameOver.draw();
+    },
+    update(){
+
+    },
+    click(){
+      changeScreen(screens.BEGIN);
     }
   }
 }
